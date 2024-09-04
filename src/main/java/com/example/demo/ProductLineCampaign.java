@@ -19,4 +19,8 @@ public class ProductLineCampaign {
 	public void clear() {
 		productLineKeys.clear();
 	}
+
+	public boolean isEmpty() {
+		return productLineKeys.isEmpty();
+	}
 }

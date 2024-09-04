@@ -5,13 +5,16 @@ import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @Data @EqualsAndHashCode
 public class Campaign {
 	private String name;
 	private String couponId;
-	private String layoutId;
+	private Double layoutId;
 	private String percentage;
 	private String volume;
 	private String description;
@@ -33,33 +36,39 @@ public class Campaign {
 	public String toSQL() {
 		Map<String, Object> map = new HashMap<>();
 		if (!StringUtils.isEmpty(name)) {
-			map.put("name", name);
+			map.put("NAME", name);
 		}
 		if (!StringUtils.isEmpty(couponId)) {
-			map.put("couponId", couponId);
+			map.put("COUPON_ID", couponId);
 		}
-		if (!StringUtils.isEmpty(layoutId)) {
-			map.put("layoutId", layoutId);
+		if (layoutId != null) {
+			map.put("LAYOUT_ID", layoutId);
 		}
 		if (!StringUtils.isEmpty(percentage)) {
-			map.put("percentage", percentage);
+			map.put("PERCENTAGE", percentage);
 		}
 		if (!StringUtils.isEmpty(volume)) {
-			map.put("volume", volume);
+			map.put("VOLUME", volume);
 		}
 		if (!StringUtils.isEmpty(description)) {
-			map.put("description", description);
+			map.put("DESCRIPTION", description);
 		}
 		if (!StringUtils.isEmpty(discountTitle)) {
-			map.put("discountTitle", discountTitle);
+			map.put("DISCOUNT_TITLE", discountTitle);
 		}
 		if (!StringUtils.isEmpty(couponValidationPattern)) {
-			map.put("couponValidationPattern", couponValidationPattern);
+			map.put("COUPON_VALIDATION_PATTERN", couponValidationPattern);
 		}
 		if (!StringUtils.isEmpty(recommendationCode)) {
-			map.put("recommendationCode", recommendationCode);
+			map.put("RECOMMENDATION_CODE", recommendationCode);
 		}
 
 		return "INSERT INTO CAMPAIGN (%s) VALUES (%s);".formatted(String.join(", ", map.keySet()), String.join(", ", map.values().stream().map(Object::toString).toArray(String[]::new)));
+	}
+
+	public boolean isEmpty() {
+		boolean emptyStrings = Stream.of(name, couponId, percentage, volume, description, discountTitle, recommendationCode, couponValidationPattern).allMatch(StringUtils::isEmpty);
+		boolean emptyNumbers = Stream.of(layoutId).allMatch(Objects::isNull);
+		return emptyNumbers && emptyStrings;
 	}
 }

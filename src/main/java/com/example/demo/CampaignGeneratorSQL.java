@@ -1,8 +1,9 @@
 package com.example.demo;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Data
+@Data @EqualsAndHashCode
 public class CampaignGeneratorSQL {
 	private String text;
 	private Campaign campaign = new Campaign();
@@ -15,11 +16,20 @@ public class CampaignGeneratorSQL {
 	}
 
 	public String toSQL() {
-		return """
-				SET schema ANYTIME;
-				%s
-				%s
-				%s
-				""".formatted(campaign.toSQL(), productLineCampaign.toSQL(), coupon.toSQL());
+		StringBuilder sb = new StringBuilder();
+		sb.append("SET schema ANYTIME;\n");
+		if (!campaign.isEmpty()) {
+			sb.append(campaign.toSQL());
+		}
+
+		if (!productLineCampaign.isEmpty()) {
+			sb.append(productLineCampaign.toSQL()).append("\n");
+		}
+
+		if (!coupon.isEmpty()) {
+			sb.append(coupon.toSQL()).append("\n");
+		}
+
+		return sb.toString();
 	}
 }
