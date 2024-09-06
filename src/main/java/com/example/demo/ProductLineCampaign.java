@@ -13,11 +13,7 @@ public class ProductLineCampaign {
 	public String toSQL() {
 		return """
 				INSERT INTO PRODUCT_LINE_CAMPAIGN (PRODUCT_LINE_KEY, CAMPAIGN_NAME) (SELECT PL.STRATEGY_KEY, '%s' FROM PRODUCT_LINE PL WHERE PL.STRATEGY_KEY IN (%s));
-				""".formatted(campaign.getName(), productLineKeys);
-	}
-
-	public void clear() {
-		productLineKeys.clear();
+				""".formatted(campaign.getVCampaignName(), productLineKeys);
 	}
 
 	public boolean isEmpty() {

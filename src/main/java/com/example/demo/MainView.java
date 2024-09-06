@@ -1,15 +1,21 @@
 package com.example.demo;
 
 import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.customfield.CustomField;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ReadOnlyHasValue;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
@@ -24,95 +30,63 @@ public class MainView extends VerticalLayout {
         Binder<CampaignGeneratorSQL> campaignGeneratorSQLBinder = new Binder<>(CampaignGeneratorSQL.class);
         campaignGeneratorSQLBinder.setBean(new CampaignGeneratorSQL());
 
-        Button clearButton = new Button("Clear");
-        clearButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        clearButton.addClickListener(event -> campaignGeneratorSQLBinder.setBean(new CampaignGeneratorSQL()));
-        add(clearButton);
+        FormLayout formLayout = new FormLayout();
+        add(formLayout);
+        // CAMPAIGN GENERATOR SQL
+        TextField campaignName = new TextField("Campaign Name");
+        campaignGeneratorSQLBinder.bind(campaignName, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getName(), (campaignGeneratorSQL, campaignNameValue) -> campaignGeneratorSQL.getCampaign().setName(campaignNameValue));
+        TextField couponId = new TextField("Coupon Id");
+        campaignGeneratorSQLBinder.bind(couponId, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getCouponId(), (campaignGeneratorSQL, couponIdValue) -> campaignGeneratorSQL.getCampaign().setCouponId(couponIdValue));
+        NumberField layoutId = new NumberField("Layout Id");
+        campaignGeneratorSQLBinder.bind(layoutId, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getLayoutId(), (campaignGeneratorSQL, layoutIdValue) -> campaignGeneratorSQL.getCampaign().setLayoutId(layoutIdValue));
+        TextField percentage = new TextField("Percentage");
+        campaignGeneratorSQLBinder.bind(percentage, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getPercentage(), (campaignGeneratorSQL, percentageValue) -> campaignGeneratorSQL.getCampaign().setPercentage(percentageValue));
+        TextField volume = new TextField("Volume");
+        campaignGeneratorSQLBinder.bind(volume, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getVolume(), (campaignGeneratorSQL, volumeValue) -> campaignGeneratorSQL.getCampaign().setVolume(volumeValue));
+        TextField description = new TextField("Description");
+        campaignGeneratorSQLBinder.bind(description, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getDescription(), (campaignGeneratorSQL, descriptionValue) -> campaignGeneratorSQL.getCampaign().setDescription(descriptionValue));
+        TextField discountTitle = new TextField("Discount Title");
+        campaignGeneratorSQLBinder.bind(discountTitle, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getDiscountTitle(), (campaignGeneratorSQL, discountTitleValue) -> campaignGeneratorSQL.getCampaign().setDiscountTitle(discountTitleValue));
+        TextField recommendationCode = new TextField("Recommendation Code");
+        campaignGeneratorSQLBinder.bind(recommendationCode, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getRecommendationCode(), (campaignGeneratorSQL, recommendationCodeValue) -> campaignGeneratorSQL.getCampaign().setRecommendationCode(recommendationCodeValue));
+        formLayout.add(campaignName, couponId, layoutId, percentage, volume, description, discountTitle, recommendationCode);
+        Checkbox atWork = new Checkbox("At Work");
+        campaignGeneratorSQLBinder.bind(atWork, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().isAtWork(), (campaignGeneratorSQL, atWorkValue) -> campaignGeneratorSQL.getCampaign().setAtWork(atWorkValue));
+        formLayout.add(atWork);
 
-        CampaignEditor campaignEditor = new CampaignEditor();
-        campaignGeneratorSQLBinder.bind(campaignEditor, CampaignGeneratorSQL::getCampaign, CampaignGeneratorSQL::setCampaign);
-        add(campaignEditor);
+        // COUPON GENERATOR SQL
+        TextField couponCode = new TextField("Coupon Code");
+        campaignGeneratorSQLBinder.bind(couponCode, campaignGeneratorSQL -> campaignGeneratorSQL.getCoupon().getCouponCode(), (campaignGeneratorSQL, couponCodeValue) -> campaignGeneratorSQL.getCoupon().setCouponCode(couponCodeValue));
+        NumberField used = new NumberField("Used");
+        campaignGeneratorSQLBinder.bind(used, campaignGeneratorSQL -> campaignGeneratorSQL.getCoupon().getUsed(), (campaignGeneratorSQL, usedValue) -> campaignGeneratorSQL.getCoupon().setUsed(usedValue));
+        formLayout.add(couponCode, used);
 
-        CouponEditor couponEditor = new CouponEditor(campaignEditor.getCampaignBinder());
-        campaignGeneratorSQLBinder.bind(couponEditor, CampaignGeneratorSQL::getCoupon, CampaignGeneratorSQL::setCoupon);
-        add(couponEditor);
-
+        //OUTPUT
+        HorizontalLayout campaignSQLLayout = new HorizontalLayout();
+        add(campaignSQLLayout);
         TextArea campaignSQL = new TextArea("Campaign SQL");
         campaignSQL.setReadOnly(true);
         campaignSQL.setValue(campaignGeneratorSQLBinder.getBean().toSQL());
         campaignGeneratorSQLBinder.addStatusChangeListener(event -> campaignSQL.setValue(campaignGeneratorSQLBinder.getBean().toSQL()));
+        campaignSQLLayout.add(campaignSQL);
+        Button button = new Button("Copy to clipboard", VaadinIcon.COPY.create());
+        button.addClickListener(e -> UI.getCurrent().getPage().executeJs("navigator.clipboard.writeText($0)", campaignSQL.getValue()));
+        campaignSQLLayout.add(button);
 
-        add(campaignSQL);
+        TextField fileName = new TextField("File Name");
+        fileName.setReadOnly(true);
+        campaignGeneratorSQLBinder.addStatusChangeListener(event -> fileName.setValue(campaignGeneratorSQLBinder.getBean().getFileName()));
+        add(fileName);
+
+        // Controls
+        Button clearButton = new Button("Clear");
+        clearButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        clearButton.addClickListener(event -> {
+            campaignGeneratorSQLBinder.readBean(new CampaignGeneratorSQL());
+            campaignSQL.setValue(campaignGeneratorSQLBinder.getBean().toSQL());
+            fileName.setValue(campaignGeneratorSQLBinder.getBean().getFileName());
+        });
+        add(clearButton);
     }
 
-    public class CouponEditor extends CustomField<Coupon> {
-        private final Binder<Coupon> couponBinder = new Binder<>(Coupon.class);
-        private final Binder<Campaign> campaignBinder;
-        public CouponEditor(Binder<Campaign> campaignBinder) {
-            this.campaignBinder = campaignBinder;
-            couponBinder.setBean(new Coupon(new Campaign()));
-            TextField couponCode = new TextField("Coupon Code");
-            couponBinder.bind(couponCode, Coupon::getCouponCode, Coupon::setCouponCode);
-            NumberField used = new NumberField("Used");
-            couponBinder.bind(used, Coupon::getUsed, Coupon::setUsed);
-            add(couponCode, used);
-        }
-
-        @Override
-        protected Coupon generateModelValue () {
-            Coupon coupon = new Coupon(campaignBinder.getBean());
-            try {
-                couponBinder.writeBean(coupon);
-            } catch (ValidationException e) {
-                System.out.println("Error while writing bean");
-            }
-            return coupon;
-        }
-
-        @Override
-        protected void setPresentationValue (Coupon coupon) {
-            couponBinder.readBean(coupon);
-        }
-    }
-
-    public class CampaignEditor extends CustomField<Campaign> {
-        @Getter
-        private final Binder<Campaign> campaignBinder = new Binder<>(Campaign.class);
-        public CampaignEditor() {
-            campaignBinder.setBean(new Campaign());
-            TextField campaignName = new TextField("Campaign Name");
-            campaignBinder.bind(campaignName, Campaign::getName, Campaign::setName);
-            TextField couponId = new TextField("Coupon Id");
-            campaignBinder.bind(couponId, Campaign::getCouponId, Campaign::setCouponId);
-            NumberField layoutId = new NumberField("Layout Id");
-            campaignBinder.bind(layoutId, Campaign::getLayoutId, Campaign::setLayoutId);
-            TextField percentage = new TextField("Percentage");
-            campaignBinder.bind(percentage, Campaign::getPercentage, Campaign::setPercentage);
-            TextField volume = new TextField("Volume");
-            campaignBinder.bind(volume, Campaign::getVolume, Campaign::setVolume);
-            TextField description = new TextField("Description");
-            campaignBinder.bind(description, Campaign::getDescription, Campaign::setDescription);
-            TextField discountTitle = new TextField("Discount Title");
-            campaignBinder.bind(discountTitle, Campaign::getDiscountTitle, Campaign::setDiscountTitle);
-            TextField recommendationCode = new TextField("Recommendation Code");
-            campaignBinder.bind(recommendationCode, Campaign::getRecommendationCode, Campaign::setRecommendationCode);
-            add(campaignName, couponId, layoutId, percentage, volume, description, discountTitle, recommendationCode);
-        }
-
-        @Override
-        protected Campaign generateModelValue () {
-            Campaign campaign = new Campaign();
-            try {
-                campaignBinder.writeBean(campaign);
-            } catch (ValidationException e) {
-                System.out.println("Error while writing bean");
-            }
-            return campaign;
-        }
-
-        @Override
-        protected void setPresentationValue (Campaign campaign) {
-            campaignBinder.readBean(campaign);
-        }
-    }
 }

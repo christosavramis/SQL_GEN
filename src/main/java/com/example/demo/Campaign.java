@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 @Data @EqualsAndHashCode
@@ -21,22 +22,15 @@ public class Campaign {
 	private String discountTitle;
 	private String recommendationCode;
 	private String couponValidationPattern;
+	private boolean atWork = true;
 
-	public void clear() {
-		name = null;
-		couponId = null;
-		layoutId = null;
-		percentage = null;
-		volume = null;
-		description = null;
-		discountTitle = null;
-		couponValidationPattern = null;
-		recommendationCode = null;
+	public String getVCampaignName() {
+		return (atWork ? "AT_WORK_" + name.trim().toUpperCase() : name.trim().toUpperCase()).replaceAll("[^a-zA-Z0-9]", "_");
 	}
 	public String toSQL() {
 		Map<String, Object> map = new HashMap<>();
 		if (!StringUtils.isEmpty(name)) {
-			map.put("NAME", name);
+			map.put("NAME", getVCampaignName());
 		}
 		if (!StringUtils.isEmpty(couponId)) {
 			map.put("COUPON_ID", couponId);
@@ -63,7 +57,7 @@ public class Campaign {
 			map.put("RECOMMENDATION_CODE", recommendationCode);
 		}
 
-		return "INSERT INTO CAMPAIGN (%s) VALUES (%s);".formatted(String.join(", ", map.keySet()), String.join(", ", map.values().stream().map(Object::toString).toArray(String[]::new)));
+		return "INSERT INTO CAMPAIGN (%s) VALUES (%s);".formatted(String.join(", ", map.keySet()), String.join(", ", map.values().stream().map(CampaignGeneratorSQL.valueParser).map(Object::toString).toArray(String[]::new)));
 	}
 
 	public boolean isEmpty() {

@@ -13,12 +13,7 @@ public class Coupon {
 	public String toSQL() {
 		return """
 				INSERT INTO COUPON (COUPON_CODE, USED, CAMPAIGN_NAME) VALUES ('%s', %s, '%s');
-				""".formatted(couponCode, Math.round(used != null ? used : 0), campaign.getName());
-	}
-
-	public void clear() {
-		couponCode = null;
-		used = null;
+				""".formatted(CampaignGeneratorSQL.valueParser.apply(couponCode), Math.round(used != null ? used : 0), CampaignGeneratorSQL.valueParser.apply(campaign.getVCampaignName()));
 	}
 
 	public boolean isEmpty() {
