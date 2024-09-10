@@ -44,3 +44,8 @@ dependencyManagement {
 		mavenBom "com.vaadin:vaadin-bom:$vaadinVersion"
 	}
 }
+
+vaadin {
+	productionMode = true
+	optimizeBundle = true
+}

@@ -3,6 +3,7 @@ package com.example.demo;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
 import java.util.function.Function;
 
 @Data @EqualsAndHashCode
@@ -12,21 +13,10 @@ public class CampaignGeneratorSQL {
 	private Coupon coupon = new Coupon(campaign);
 
 	public String toSQL() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("SET schema ANYTIME;\n");
-		if (!campaign.isEmpty()) {
-			sb.append(campaign.toSQL());
-		}
-
-		if (!productLineCampaign.isEmpty()) {
-			sb.append(productLineCampaign.toSQL()).append("\n");
-		}
-
-		if (!coupon.isEmpty()) {
-			sb.append(coupon.toSQL()).append("\n");
-		}
-
-		return sb.toString();
+		return "SET schema ANYTIME;\n" +
+				campaign.toSQL() +
+				productLineCampaign.toSQL() + "\n" +
+				coupon.toSQL() + "\n";
 	}
 
 	public String getFileName () {
@@ -42,5 +32,27 @@ public class CampaignGeneratorSQL {
 			return value.toString();
 		}
 	};
+
+	public static CampaignGeneratorSQL sample() {
+		CampaignGeneratorSQL campaignGeneratorSQL = new CampaignGeneratorSQL();
+		Campaign campaign = new Campaign();
+		campaign.setName("Campaign Name");
+		campaign.setCouponId(1);
+		campaign.setLayoutId(1);
+		campaign.setPercentage(10);
+		campaign.setVolume(100);
+		campaign.setDescription("Description");
+		campaign.setDiscountTitle("Discount Title");
+		campaign.setRecommendationCode("Recommendation Code");
+		campaignGeneratorSQL.setCampaign(campaign);
+		Coupon coupon = new Coupon(campaign);
+		coupon.setCouponCode(123456);
+		coupon.setUsed(0);
+		campaignGeneratorSQL.setCoupon(coupon);
+		ProductLineCampaign productLineCampaign = new ProductLineCampaign(campaign);
+		productLineCampaign.getProductLineKeys().addAll(List.of(ProductLineKey.MOTOR, ProductLineKey.BTM, ProductLineKey.SMART_DRIVE));
+		campaignGeneratorSQL.setProductLineCampaign(productLineCampaign);
+		return campaignGeneratorSQL;
+	}
 
 }

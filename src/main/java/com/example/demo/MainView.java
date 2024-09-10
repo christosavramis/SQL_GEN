@@ -5,20 +5,28 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.NumberField;
-import com.vaadin.flow.component.textfield.TextArea;
-import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.*;
+import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ReadOnlyHasValue;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.dom.Style;
+import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
+
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * The main view contains a button and a click listener.
@@ -26,67 +34,109 @@ import lombok.Getter;
 @Route("")
 public class MainView extends VerticalLayout {
 
+    public static String sanitizeString(String s) {
+        return s.replace("[^\\p{L}\\p{N}\\p{P}\\p{Z}]", "").strip();
+    }
+
     public MainView() {
-        Binder<CampaignGeneratorSQL> campaignGeneratorSQLBinder = new Binder<>(CampaignGeneratorSQL.class);
-        campaignGeneratorSQLBinder.setBean(new CampaignGeneratorSQL());
+        Binder<CampaignGeneratorSQL> binder = new Binder<>(CampaignGeneratorSQL.class);
+        binder.setBean(CampaignGeneratorSQL.sample());
 
-        FormLayout formLayout = new FormLayout();
-        add(formLayout);
-        // CAMPAIGN GENERATOR SQL
+
+        add(new H3("Campaign Section"));
+
+        FormLayout campaignFormLayout = new FormLayout();
         TextField campaignName = new TextField("Campaign Name");
-        campaignGeneratorSQLBinder.bind(campaignName, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getName(), (campaignGeneratorSQL, campaignNameValue) -> campaignGeneratorSQL.getCampaign().setName(campaignNameValue));
-        TextField couponId = new TextField("Coupon Id");
-        campaignGeneratorSQLBinder.bind(couponId, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getCouponId(), (campaignGeneratorSQL, couponIdValue) -> campaignGeneratorSQL.getCampaign().setCouponId(couponIdValue));
-        NumberField layoutId = new NumberField("Layout Id");
-        campaignGeneratorSQLBinder.bind(layoutId, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getLayoutId(), (campaignGeneratorSQL, layoutIdValue) -> campaignGeneratorSQL.getCampaign().setLayoutId(layoutIdValue));
-        TextField percentage = new TextField("Percentage");
-        campaignGeneratorSQLBinder.bind(percentage, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getPercentage(), (campaignGeneratorSQL, percentageValue) -> campaignGeneratorSQL.getCampaign().setPercentage(percentageValue));
-        TextField volume = new TextField("Volume");
-        campaignGeneratorSQLBinder.bind(volume, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getVolume(), (campaignGeneratorSQL, volumeValue) -> campaignGeneratorSQL.getCampaign().setVolume(volumeValue));
+        binder.forField(campaignName)
+                .withValidator(name -> !name.isBlank(), "Campaign name is required")
+                .bind(campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getName(), (campaignGeneratorSQL, campaignNameValue) -> campaignGeneratorSQL.getCampaign().setName(campaignNameValue));
+
+        IntegerField couponId = new IntegerField("Coupon Id");
+        binder.forField(couponId)
+                .withValidator(Objects::nonNull, "Coupon Id is required")
+                .bind(campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getCouponId(), (campaignGeneratorSQL, couponIdValue) -> campaignGeneratorSQL.getCampaign().setCouponId(couponIdValue));
+
+        IntegerField layoutId = new IntegerField("Layout Id");
+        binder.forField(layoutId)
+                .withValidator(Objects::nonNull, "Layout Id is required")
+                .bind(campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getLayoutId(), (campaignGeneratorSQL, layoutIdValue) -> campaignGeneratorSQL.getCampaign().setLayoutId(layoutIdValue));
+
+        IntegerField percentage = new IntegerField("Percentage");
+        binder.forField(percentage)
+                .withValidator(percentageValue -> percentageValue == null || percentageValue >= 0 && percentageValue <= 100, "Percentage must be between 0 and 100")
+                .bind(campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getPercentage(), (campaignGeneratorSQL, percentageValue) -> campaignGeneratorSQL.getCampaign().setPercentage(percentageValue));
+
+        IntegerField volume = new IntegerField("Volume");
+        binder.bind(volume, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getVolume(), (campaignGeneratorSQL, volumeValue) -> campaignGeneratorSQL.getCampaign().setVolume(volumeValue));
+
         TextField description = new TextField("Description");
-        campaignGeneratorSQLBinder.bind(description, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getDescription(), (campaignGeneratorSQL, descriptionValue) -> campaignGeneratorSQL.getCampaign().setDescription(descriptionValue));
+        binder.bind(description, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getDescription(), (campaignGeneratorSQL, descriptionValue) -> campaignGeneratorSQL.getCampaign().setDescription(descriptionValue));
+
         TextField discountTitle = new TextField("Discount Title");
-        campaignGeneratorSQLBinder.bind(discountTitle, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getDiscountTitle(), (campaignGeneratorSQL, discountTitleValue) -> campaignGeneratorSQL.getCampaign().setDiscountTitle(discountTitleValue));
+        binder.bind(discountTitle, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getDiscountTitle(), (campaignGeneratorSQL, discountTitleValue) -> campaignGeneratorSQL.getCampaign().setDiscountTitle(discountTitleValue));
+
         TextField recommendationCode = new TextField("Recommendation Code");
-        campaignGeneratorSQLBinder.bind(recommendationCode, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getRecommendationCode(), (campaignGeneratorSQL, recommendationCodeValue) -> campaignGeneratorSQL.getCampaign().setRecommendationCode(recommendationCodeValue));
-        formLayout.add(campaignName, couponId, layoutId, percentage, volume, description, discountTitle, recommendationCode);
+        binder.bind(recommendationCode, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getRecommendationCode(), (campaignGeneratorSQL, recommendationCodeValue) -> campaignGeneratorSQL.getCampaign().setRecommendationCode(recommendationCodeValue));
+
         Checkbox atWork = new Checkbox("At Work");
-        campaignGeneratorSQLBinder.bind(atWork, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().isAtWork(), (campaignGeneratorSQL, atWorkValue) -> campaignGeneratorSQL.getCampaign().setAtWork(atWorkValue));
-        formLayout.add(atWork);
+        binder.bind(atWork, campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().isAtWork(), (campaignGeneratorSQL, atWorkValue) -> campaignGeneratorSQL.getCampaign().setAtWork(atWorkValue));
 
-        // COUPON GENERATOR SQL
-        TextField couponCode = new TextField("Coupon Code");
-        campaignGeneratorSQLBinder.bind(couponCode, campaignGeneratorSQL -> campaignGeneratorSQL.getCoupon().getCouponCode(), (campaignGeneratorSQL, couponCodeValue) -> campaignGeneratorSQL.getCoupon().setCouponCode(couponCodeValue));
-        NumberField used = new NumberField("Used");
-        campaignGeneratorSQLBinder.bind(used, campaignGeneratorSQL -> campaignGeneratorSQL.getCoupon().getUsed(), (campaignGeneratorSQL, usedValue) -> campaignGeneratorSQL.getCoupon().setUsed(usedValue));
-        formLayout.add(couponCode, used);
+        campaignFormLayout.add(campaignName, couponId, layoutId, percentage, volume, description, discountTitle, recommendationCode, atWork);
+        add(campaignFormLayout);
 
-        //OUTPUT
+        add(new H3("Coupon Section"));
+        FormLayout couponFormLayout = new FormLayout();
+        IntegerField couponCode = new IntegerField("Coupon Code");
+        binder.bind(couponCode, campaignGeneratorSQL -> campaignGeneratorSQL.getCoupon().getCouponCode(), (campaignGeneratorSQL, couponCodeValue) -> campaignGeneratorSQL.getCoupon().setCouponCode(couponCodeValue));
+
+        IntegerField used = new IntegerField("Used");
+        binder.bind(used, campaignGeneratorSQL -> campaignGeneratorSQL.getCoupon().getUsed(), (campaignGeneratorSQL, usedValue) -> campaignGeneratorSQL.getCoupon().setUsed(usedValue));
+        couponFormLayout.add(couponCode, used);
+        add(couponFormLayout);
+
+        add(new H3("Product Line Campaign Section"));
+        FormLayout productLineCampaignFormLayout = new FormLayout();
+        CheckboxGroup<ProductLineKey> productLineKeys = new CheckboxGroup<>();
+        productLineKeys.setItems(ProductLineKey.values());
+        productLineKeys.setItemLabelGenerator(ProductLineKey::name);
+        binder.forField(productLineKeys)
+                .withValidator(productLineKeysValue -> !productLineKeysValue.isEmpty(), "At least one product line key is required")
+                .bind(campaignGeneratorSQL -> Set.of(campaignGeneratorSQL.getProductLineCampaign().getProductLineKeys().toArray(new ProductLineKey[0])), (campaignGeneratorSQL, productLineKeysValue) -> campaignGeneratorSQL.getProductLineCampaign().setProductLineKeys(new ArrayList<>(productLineKeysValue)));
+        productLineCampaignFormLayout.add(productLineKeys);
+        add(productLineCampaignFormLayout);
+
         HorizontalLayout campaignSQLLayout = new HorizontalLayout();
+        campaignSQLLayout.getStyle().setWidth("100%");
+        campaignSQLLayout.getStyle().setPosition(Style.Position.RELATIVE);
         add(campaignSQLLayout);
+
         TextArea campaignSQL = new TextArea("Campaign SQL");
+        campaignSQL.getStyle().setWidth("100%");
+        campaignSQL.getStyle().setHeight("200px");
         campaignSQL.setReadOnly(true);
-        campaignSQL.setValue(campaignGeneratorSQLBinder.getBean().toSQL());
-        campaignGeneratorSQLBinder.addStatusChangeListener(event -> campaignSQL.setValue(campaignGeneratorSQLBinder.getBean().toSQL()));
+        campaignSQL.setValue(binder.getBean().toSQL());
         campaignSQLLayout.add(campaignSQL);
-        Button button = new Button("Copy to clipboard", VaadinIcon.COPY.create());
+
+        Button button = new Button("", VaadinIcon.COPY.create());
+        button.getStyle().setPosition(Style.Position.ABSOLUTE);
+        button.getStyle().setRight("0");
+        button.getStyle().setTop("0");
         button.addClickListener(e -> UI.getCurrent().getPage().executeJs("navigator.clipboard.writeText($0)", campaignSQL.getValue()));
         campaignSQLLayout.add(button);
 
         TextField fileName = new TextField("File Name");
         fileName.setReadOnly(true);
-        campaignGeneratorSQLBinder.addStatusChangeListener(event -> fileName.setValue(campaignGeneratorSQLBinder.getBean().getFileName()));
         add(fileName);
 
-        // Controls
-        Button clearButton = new Button("Clear");
-        clearButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        clearButton.addClickListener(event -> {
-            campaignGeneratorSQLBinder.readBean(new CampaignGeneratorSQL());
-            campaignSQL.setValue(campaignGeneratorSQLBinder.getBean().toSQL());
-            fileName.setValue(campaignGeneratorSQLBinder.getBean().getFileName());
+        Button generateSQLButton = new Button("Generate SQL");
+        generateSQLButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        generateSQLButton.addClickListener(e -> {
+            if (binder.validate().isOk()) {
+                campaignSQL.setValue(binder.getBean().toSQL());
+                fileName.setValue(binder.getBean().getFileName());
+            }
         });
-        add(clearButton);
+        add(generateSQLButton);
     }
 
 }
