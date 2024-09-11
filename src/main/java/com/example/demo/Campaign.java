@@ -12,49 +12,53 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-@Data @EqualsAndHashCode
+@Data
+@EqualsAndHashCode
 public class Campaign {
-	private final String AT_WORK_PREFIX = "AT_WORK_";
-	private String name;
-	private Integer couponId;
-	private Integer layoutId;
+    private final String AT_WORK_PREFIX = "AT_WORK_";
+    private String name;
+    private Integer couponId;
+    private Integer layoutId = 1;
 
-	private Integer percentage;
-	private Integer volume;
-	private String description;
-	private String discountTitle;
-	private String recommendationCode;
-	private String couponValidationPattern;
-	private boolean atWork = true;
+    private Integer percentage;
+    private Integer volume = -1;
+    private String description;
+    private String discountTitle;
+    private String recommendationCode;
+    private String couponValidationPattern;
+    private boolean atWork = true;
 
-	public String getVCampaignName() {
-		return atWork ? AT_WORK_PREFIX + name : name;
+    public String getVCampaignName() {
+        return atWork ? AT_WORK_PREFIX + name : name;
+    }
+
+    public String toSQL() {
+        StringBuilder columns = new StringBuilder();
+        StringBuilder values = new StringBuilder();
+        addColumnIfNotNull(columns, values, "CAMPAIGN_NAME", getVCampaignName());
+        addColumnIfNotNull(columns, values, "COUPON_ID", couponId);
+        addColumnIfNotNull(columns, values, "LAYOUT_ID", layoutId);
+        addColumnIfNotNull(columns, values, "PERCENTAGE", percentage);
+        addColumnIfNotNull(columns, values, "VOLUME", volume);
+        addColumnIfNotNull(columns, values, "DESCRIPTION", description);
+        addColumnIfNotNull(columns, values, "DISCOUNT_TITLE", discountTitle);
+        addColumnIfNotNull(columns, values, "RECOMMENDATION_CODE", recommendationCode);
+        addColumnIfNotNull(columns, values, "COUPON_VALIDATION_PATTERN", couponValidationPattern);
+		trim(columns, values);
+        return "INSERT INTO CAMPAIGN (%s) \n VALUES (%s);".formatted(columns, values);
+    }
+	private void trim(StringBuilder columns, StringBuilder values) {
+		columns.delete(columns.length() - 2, columns.length());
+		values.delete(values.length() - 2, values.length());
 	}
-
-	public String toSQL() {
-		Map<String, Object> map = new HashMap<>();
-		map.put("NAME", getVCampaignName());
-		map.put("COUPON_ID", couponId);
-		map.put("LAYOUT_ID", layoutId);
-		if (percentage != null) {
-			map.put("PERCENTAGE", percentage);
-		}
-		if (volume != null) {
-			map.put("VOLUME", volume);
-		}
-		if (!StringUtils.isEmpty(description)) {
-			map.put("DESCRIPTION", description);
-		}
-		if (!StringUtils.isEmpty(discountTitle)) {
-			map.put("DISCOUNT_TITLE", discountTitle);
-		}
-		if (!StringUtils.isEmpty(couponValidationPattern)) {
-			map.put("COUPON_VALIDATION_PATTERN", couponValidationPattern);
-		}
-		if (!StringUtils.isEmpty(recommendationCode)) {
-			map.put("RECOMMENDATION_CODE", recommendationCode);
-		}
-
-		return "INSERT INTO CAMPAIGN (%s) VALUES (%s);".formatted(String.join(", ", map.keySet()), String.join(", ", map.values().stream().map(CampaignGeneratorSQL.valueParser).map(Object::toString).toArray(String[]::new)));
-	}
+    private void addColumnIfNotNull(StringBuilder columns, StringBuilder values, String columnName, Object value) {
+        if (value != null) {
+            columns.append(columnName).append(", ");
+            if (value instanceof String) {
+                values.append("'%s', ".formatted(value));
+            } else {
+                values.append("%s, ".formatted(value));
+            }
+        }
+    }
 }
