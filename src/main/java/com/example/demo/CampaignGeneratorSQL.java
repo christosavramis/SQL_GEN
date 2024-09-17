@@ -19,8 +19,8 @@ public class CampaignGeneratorSQL {
 	public String toSQL() {
 		return "SET schema ANYTIME;\n" +
 				campaign.toSQL() + "\n" +
-				productLineCampaign.toSQL() + "\n" +
-				coupon.toSQL();
+				coupon.toSQL() + "\n" +
+				productLineCampaign.toSQL();
 	}
 
 	public String getFileName () {
