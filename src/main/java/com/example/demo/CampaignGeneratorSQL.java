@@ -1,5 +1,9 @@
 package com.example.demo;
 
+import com.example.demo.data.Campaign;
+import com.example.demo.data.Coupon;
+import com.example.demo.data.ProductLineCampaign;
+import com.example.demo.data.ProductLineKey;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

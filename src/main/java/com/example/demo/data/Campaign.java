@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.example.demo.data;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 @Data
 @EqualsAndHashCode
 public class Campaign {
-    private final String AT_WORK_PREFIX = "AT_WORK_";
+    private static final String AT_WORK_PREFIX = "AT_WORK_";
     private String name;
     private Integer couponId;
     private Integer layoutId = 1;
@@ -35,7 +35,7 @@ public class Campaign {
     public String toSQL() {
         StringBuilder columns = new StringBuilder();
         StringBuilder values = new StringBuilder();
-        addColumnIfNotNull(columns, values, "CAMPAIGN_NAME", getVCampaignName());
+        addColumnIfNotNull(columns, values, "NAME", getVCampaignName());
         addColumnIfNotNull(columns, values, "COUPON_ID", couponId);
         addColumnIfNotNull(columns, values, "LAYOUT_ID", layoutId);
         addColumnIfNotNull(columns, values, "PERCENTAGE", percentage);
@@ -45,7 +45,7 @@ public class Campaign {
         addColumnIfNotNull(columns, values, "RECOMMENDATION_CODE", recommendationCode);
         addColumnIfNotNull(columns, values, "COUPON_VALIDATION_PATTERN", couponValidationPattern);
 		trim(columns, values);
-        return "INSERT INTO CAMPAIGN (%s) \n VALUES (%s);".formatted(columns, values);
+        return "INSERT INTO CAMPAIGN (%s) %n VALUES (%s);".formatted(columns, values);
     }
 	private void trim(StringBuilder columns, StringBuilder values) {
 		columns.delete(columns.length() - 2, columns.length());

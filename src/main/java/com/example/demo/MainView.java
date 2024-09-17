@@ -1,12 +1,12 @@
 package com.example.demo;
 
+import com.example.demo.data.ProductLineKey;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -22,15 +22,8 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * The main view contains a button and a click listener.
- */
 @Route("")
 public class MainView extends VerticalLayout {
-
-    public static String sanitizeString(String s) {
-        return s.replace("[^\\p{L}\\p{N}\\p{P}\\p{Z}]", "").strip();
-    }
 
     public MainView() {
         Binder<CampaignGeneratorSQL> binder = new Binder<>(CampaignGeneratorSQL.class);
