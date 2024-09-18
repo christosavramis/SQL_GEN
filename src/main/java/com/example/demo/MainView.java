@@ -7,8 +7,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -18,10 +17,15 @@ import com.vaadin.flow.component.textfield.*;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.StreamResource;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 @Route("")
 public class MainView extends VerticalLayout {
@@ -112,52 +116,56 @@ public class MainView extends VerticalLayout {
                 used,
                 productLineKeys);
         add(campaignFormLayout);
-        //Todo: for layoutId, volume, used, add a checkbox to show them like show extra fields
+        TextArea guideLinesTextArea = getGuideLines();
+        guideLinesTextArea.getStyle().set("width", "100%");
+        guideLinesTextArea.getStyle().set("height", "200px");
+        add(guideLinesTextArea);
 
-        HorizontalLayout campaignSQLLayout = new HorizontalLayout();
-        campaignSQLLayout.getStyle().setWidth("100%");
-        campaignSQLLayout.getStyle().setPosition(Style.Position.RELATIVE);
-        add(campaignSQLLayout);
+        add(new SqlFileDownloaderView(() -> binder.getBean().toSQL(), () -> binder.getBean().getFileName(), () -> binder.validate().isOk()));
+    }
 
-        TextArea campaignSQL = new TextArea("Campaign SQL");
-        campaignSQL.getStyle().setWidth("100%");
-        campaignSQL.getStyle().setHeight("200px");
-        campaignSQL.setReadOnly(true);
-        campaignSQL.setValue(binder.getBean().toSQL());
-        campaignSQLLayout.add(campaignSQL);
+    private static TextArea getGuideLines () {
+        String guideLines = """
+                1. Κατεβάστε το αρχείο πατώντας το κουμπί "Download SQL"
+                2. Ανοίξτε το φάκελο \\\\storage-srv1\\Applications_Development\\e-services\\projects\\ANY\\campaign-requests και δημιουργήστε ενα νεο φάκελο με την τωρινή ημερομηνία πχ 2024.09.17
+                3. Αντιγράψτε το αρχείο sql μέσα στον φάκελο που δημιουργήσατε και βαλτέ το παρακάτω αίτημα:
+                Είδος: Database Management Requests
+                Παρακαλώ να τρέξουν τα SQL Scripts που βρίσκονται στον κατάλογο \\storage-srv1\\Applications_Development\\e-services\\projects\\ANY\\campaign-requests\\2024.09.17 στην βάση παραγωγής του @nytime, ANYTIMEP, που τρέχει στο μηχάνημα με IP: 10.2.4.132 και όνομα dbs-pds1. Τα script αφορούν στην προσθήκη προωθητικών ενεργειών στην πλατφόρμα του anytime Ελλάδος.
+                """;
+        TextArea guideLinesTextArea = new TextArea("Οδηγίες για την προσθήκη καμπάνιας στην παραγωγική βάση");
+        guideLinesTextArea.setReadOnly(true);
+        guideLinesTextArea.setValue(guideLines);
+        return guideLinesTextArea;
+    }
 
-        Button button = new Button("", VaadinIcon.COPY.create());
-        button.getStyle().setPosition(Style.Position.ABSOLUTE);
-        button.getStyle().setRight("0");
-        button.getStyle().setTop("0");
-        button.addClickListener(e -> UI.getCurrent().getPage().executeJs("navigator.clipboard.writeText($0)", campaignSQL.getValue()));
-        campaignSQLLayout.add(button);
-
-        TextField fileName = new TextField("File Name");
-        fileName.setReadOnly(true);
-        fileName.setValue(binder.getBean().getFileName());
-        add(fileName);
-
-        Button generateSQLButton = new Button("Generate SQL");
-        generateSQLButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        generateSQLButton.addClickListener(e -> {
-            if (binder.validate().isOk()) {
-                campaignSQL.setValue(binder.getBean().toSQL());
-                fileName.setValue(binder.getBean().getFileName());
-            } else {
-                Notification notification = new Notification("Παρακαλώ συμπληρώστε τα υποχρεωτικά πεδία", 3000, Notification.Position.MIDDLE);
-                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                notification.open();
-            }
-        });
-        add(generateSQLButton);
-
-        //TODO: Add download file button
-        String generalCampaignFolder = "\\\\storage-srv1\\Applications_Development\\e-services\\projects\\ANY\\campaign-requests";
-        add(new H2("Βήματα για την προσθήκη καμπάνιας στην παραγωγική βάση:"));
-        add(new H2("1. Κατεβάστε το αρχείο πατώντας το κουμπί \"Download file\""));
-        add(new H2("2. Ανοίξτε το φάκελο " + generalCampaignFolder + " και δημιουργήστε ενα νεο φάκελο με την τωρινή ημερομηνία πχ 2024.0917"));
-        add(new H2("3. Αντιγράψτε το αρχείο sql μέσα στον φάκελο που δημιουργήσατε"));
+    public static class SqlFileDownloaderView extends VerticalLayout {
+        private final Anchor downloadAnchor = new Anchor("", "Download SQL");
+        public SqlFileDownloaderView(Supplier<String> sqlContentSupplier, Supplier<String> sqlFileNameSupplier, BooleanSupplier isOkaySupplier) {
+            downloadAnchor.getStyle().set("background", "var(--lumo-primary-color)");
+            downloadAnchor.getStyle().set("color", "var(--lumo-base-color)");
+            downloadAnchor.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
+            downloadAnchor.getStyle().set("padding", "var(--lumo-space-s)");
+            downloadAnchor.getStyle().set("font-size", "var(--lumo-font-size-s)");
+            downloadAnchor.addAttachListener(event -> {
+                if (Boolean.TRUE.equals(isOkaySupplier.getAsBoolean())) {
+                    StreamResource resource = new StreamResource(sqlFileNameSupplier.get(), () -> {
+                        try {
+                            return new ByteArrayInputStream(sqlContentSupplier.get().getBytes(StandardCharsets.UTF_8));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    });
+                    downloadAnchor.setHref(resource);
+                    downloadAnchor.getElement().setAttribute("download", true);
+                } else {
+                    Notification notification = new Notification("Παρακαλώ συμπληρώστε τα υποχρεωτικά πεδία", 3000, Notification.Position.MIDDLE);
+                    notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    notification.open();
+                }
+            });
+            add(downloadAnchor);
+        }
     }
 
 }
