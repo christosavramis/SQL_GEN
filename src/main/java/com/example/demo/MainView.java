@@ -7,6 +7,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -51,6 +52,7 @@ public class MainView extends VerticalLayout {
         IntegerField layoutId = new IntegerField("Layout Id");
         layoutId.setPlaceholder("π.χ. 1");
         layoutId.setHelperText("Ο κωδικός του layout συνήθως είναι 1");
+        layoutId.setVisible(false);
         binder.forField(layoutId)
                 .withValidator(Objects::nonNull, "το Layout είναι υποχρεωτικό")
                 .bind(campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getLayoutId(), (campaignGeneratorSQL, layoutIdValue) -> campaignGeneratorSQL.getCampaign().setLayoutId(layoutIdValue));
@@ -63,6 +65,7 @@ public class MainView extends VerticalLayout {
         IntegerField volume = new IntegerField("Ποσότητα");
         volume.setHelperText("-1 για απεριόριστη ποσότητα");
         volume.setPlaceholder("π.χ. -1");
+        volume.setVisible(false);
         binder.forField(volume)
                 .withValidator(volumeValue -> volumeValue == null || volumeValue >= -1, "Η ποσότητα πρέπει να είναι μη αρνητικός αριθμός ή -1 για απεριόριστη ποσότητα")
                 .bind(campaignGeneratorSQL -> campaignGeneratorSQL.getCampaign().getVolume(), (campaignGeneratorSQL, volumeValue) -> campaignGeneratorSQL.getCampaign().setVolume(volumeValue));
@@ -85,6 +88,7 @@ public class MainView extends VerticalLayout {
         IntegerField used = new IntegerField("Χρήσεις");
         used.setHelperText("Οι μέγιστες χρήσεις του κουπονιού, 0 για απεριόριστες χρήσεις");
         used.setPlaceholder("π.χ. 0");
+        used.setVisible(false);
         binder.forField(used)
                 .withValidator(usedValue -> usedValue == null || usedValue >= 0, "Οι χρήσεις πρέπει να είναι μη αρνητικός αριθμός")
                 .bind(campaignGeneratorSQL -> campaignGeneratorSQL.getCoupon().getUsed(), (campaignGeneratorSQL, usedValue) -> campaignGeneratorSQL.getCoupon().setUsed(usedValue));
@@ -108,6 +112,7 @@ public class MainView extends VerticalLayout {
                 used,
                 productLineKeys);
         add(campaignFormLayout);
+        //Todo: for layoutId, volume, used, add a checkbox to show them like show extra fields
 
         HorizontalLayout campaignSQLLayout = new HorizontalLayout();
         campaignSQLLayout.getStyle().setWidth("100%");
@@ -146,6 +151,13 @@ public class MainView extends VerticalLayout {
             }
         });
         add(generateSQLButton);
+
+        //TODO: Add download file button
+        String generalCampaignFolder = "\\\\storage-srv1\\Applications_Development\\e-services\\projects\\ANY\\campaign-requests";
+        add(new H2("Βήματα για την προσθήκη καμπάνιας στην παραγωγική βάση:"));
+        add(new H2("1. Κατεβάστε το αρχείο πατώντας το κουμπί \"Download file\""));
+        add(new H2("2. Ανοίξτε το φάκελο " + generalCampaignFolder + " και δημιουργήστε ενα νεο φάκελο με την τωρινή ημερομηνία πχ 2024.0917"));
+        add(new H2("3. Αντιγράψτε το αρχείο sql μέσα στον φάκελο που δημιουργήσατε"));
     }
 
 }
