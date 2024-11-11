@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 @Data
 @EqualsAndHashCode
 public class Campaign {
-    private static final String AT_WORK_PREFIX = "AT_WORK_";
+    private static final String AT_WORK_PREFIX = "ATWORK_";
     private String name;
     private Integer couponId;
     private Integer layoutId = 1;
