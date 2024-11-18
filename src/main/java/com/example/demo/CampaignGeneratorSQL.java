@@ -24,7 +24,7 @@ public class CampaignGeneratorSQL {
 	}
 
 	public String getFileName () {
-		return campaign.getVCampaignName() + "-enable.sql";
+		return "anygr-campaign-" + campaign.getVCampaignName() + "-enable.sql";
 	}
 
 	public static final Function<Object, String> valueParser = value -> {

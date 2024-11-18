@@ -1,33 +1,28 @@
 package com.example.demo;
 
 import com.example.demo.data.ProductLineKey;
-import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.*;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.*;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.dom.Style;
+import com.vaadin.flow.data.binder.ReadOnlyHasValue;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
 
 @Route("")
+@Slf4j
 public class MainView extends VerticalLayout {
 
     public MainView() {
@@ -121,7 +116,33 @@ public class MainView extends VerticalLayout {
         guideLinesTextArea.getStyle().set("height", "200px");
         add(guideLinesTextArea);
 
-        add(new SqlFileDownloaderView(() -> binder.getBean().toSQL(), () -> binder.getBean().getFileName(), () -> binder.validate().isOk()));
+        Anchor downloadAnchor = new Anchor("", "Download SQL");
+        downloadAnchor.getStyle().set("background", "var(--lumo-primary-color)");
+        downloadAnchor.getStyle().set("color", "var(--lumo-base-color)");
+        downloadAnchor.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
+        downloadAnchor.getStyle().set("padding", "var(--lumo-space-s)");
+        downloadAnchor.getStyle().set("font-size", "var(--lumo-font-size-s)");
+        downloadAnchor.getElement().setAttribute("download", true);
+        var binding = binder.bindReadOnly(new ReadOnlyHasValue<>(downloadAnchor::setHref), campaignGeneratorSQL -> new StreamResource(campaignGeneratorSQL.getFileName(), () -> {
+            try {
+                return new ByteArrayInputStream(campaignGeneratorSQL.toSQL().getBytes(StandardCharsets.UTF_8));
+            }
+            catch (Exception e) {
+                log.error("Error creating file", e);
+                Notification notification = new Notification("Παρουσιάστηκε σφάλμα κατά τη δημιουργία του αρχείου", 3000, Notification.Position.MIDDLE);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                notification.open();
+                return null;
+            }
+        }));
+
+        binder.addValueChangeListener(event -> {
+            if (!Objects.equals(event.getOldValue(), event.getValue())) {
+                binding.read(binder.getBean());
+            }
+        });
+
+        add(downloadAnchor);
     }
 
     private static TextArea getGuideLines () {
@@ -137,35 +158,4 @@ public class MainView extends VerticalLayout {
         guideLinesTextArea.setValue(guideLines);
         return guideLinesTextArea;
     }
-
-    public static class SqlFileDownloaderView extends VerticalLayout {
-        private final Anchor downloadAnchor = new Anchor("", "Download SQL");
-        public SqlFileDownloaderView(Supplier<String> sqlContentSupplier, Supplier<String> sqlFileNameSupplier, BooleanSupplier isOkaySupplier) {
-            downloadAnchor.getStyle().set("background", "var(--lumo-primary-color)");
-            downloadAnchor.getStyle().set("color", "var(--lumo-base-color)");
-            downloadAnchor.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
-            downloadAnchor.getStyle().set("padding", "var(--lumo-space-s)");
-            downloadAnchor.getStyle().set("font-size", "var(--lumo-font-size-s)");
-            downloadAnchor.addAttachListener(event -> {
-                if (Boolean.TRUE.equals(isOkaySupplier.getAsBoolean())) {
-                    StreamResource resource = new StreamResource(sqlFileNameSupplier.get(), () -> {
-                        try {
-                            return new ByteArrayInputStream(sqlContentSupplier.get().getBytes(StandardCharsets.UTF_8));
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            return null;
-                        }
-                    });
-                    downloadAnchor.setHref(resource);
-                    downloadAnchor.getElement().setAttribute("download", true);
-                } else {
-                    Notification notification = new Notification("Παρακαλώ συμπληρώστε τα υποχρεωτικά πεδία", 3000, Notification.Position.MIDDLE);
-                    notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                    notification.open();
-                }
-            });
-            add(downloadAnchor);
-        }
-    }
-
 }
